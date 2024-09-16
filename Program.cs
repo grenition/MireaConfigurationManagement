@@ -1,8 +1,8 @@
 ﻿using MireaConfigurationManagement.Core.Scenarios;
-using MireaConfigurationManagement.Homework1;
+using MireaConfigurationManagement.ShellEmulator;
 
 var executor = new ScanariosExecutor();
 
-executor.RegisterScenario(new FirstHomeworkScenario());
+executor.RegisterScenario(new ShellEmulatorScenario());
 
 executor.StartExecution();

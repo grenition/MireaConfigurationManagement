@@ -41,6 +41,8 @@ public class ScanariosExecutor
 
     private async Task ExecutionPipeline(CancellationToken token)
     {
+        Console.WriteLine("Select scenario to execute");
+        
         while (true)
         {
             try
@@ -48,7 +50,7 @@ public class ScanariosExecutor
                 var commandLine = Console.ReadLine();
                 var commands = commandLine.Split(' ');
 
-                if (commands.Length < 2) throw new ParsingCommandExeption();
+                if (commands.Length < 2) throw new ParsingCommandException();
 
                 switch (commands[0])
                 {
@@ -58,24 +60,35 @@ public class ScanariosExecutor
                         switch (commands[1])
                         {
                             case "execute":
-                                if (commands.Length < 3) throw new ParsingCommandExeption();
+                                if (commands.Length < 3) throw new ParsingCommandException("scenario is not assigned");
                                 var scenario = _scenarios.FirstOrDefault(x => x.Key == commands[2]);
-                                if(scenario == null) throw new ParsingCommandExeption();
+                                if(scenario == null) throw new ParsingCommandException($"scenario {commands[2]} is not exists");
 
                                 scenario.Execute(token);
                                 break;
                             case "list":
                                 PrintRegisteredScenarios();
                                 break;
+                            default:
+                                throw new ParsingCommandException($"unknown scenario command {commands[1]}");
+                                break;
                         }
                         break;
                     default:
-                        throw new ParsingCommandExeption();
+                        throw new ParsingCommandException($"unknown command {commands[0]}");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex is ParsingCommandExeption ? "Parsing command error" : ex);
+                if (ex is ParsingCommandException parsingEx)
+                {
+                    var message = "Parsing commands error";
+                    if (!string.IsNullOrEmpty(parsingEx.ParsingMessage))
+                        message += $": {parsingEx.ParsingMessage}";
+                    Console.WriteLine(message);
+                }
+                else
+                    Console.WriteLine(ex);
             }
         }
     }
@@ -90,4 +103,10 @@ public class ScanariosExecutor
     #endregion
 }
 
-public class ParsingCommandExeption : Exception { }
+public class ParsingCommandException : Exception
+{
+    public string ParsingMessage { get; private set; }
+
+    public ParsingCommandException() : base() { }
+    public ParsingCommandException(string parsingMessage) : base() => ParsingMessage = parsingMessage;
+}
