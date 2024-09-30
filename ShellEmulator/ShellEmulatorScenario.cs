@@ -2,6 +2,7 @@ using System.Diagnostics;
 using MireaConfigurationManagement.Core.Scenarios;
 using MireaConfigurationManagement.ShellEmulator.Programms;
 using MireaConfigurationManagement.ShellEmulator.Programms.Base;
+using MireaConfigurationManagement.ShellEmulator.System;
 
 namespace MireaConfigurationManagement.ShellEmulator;
 
@@ -9,18 +10,26 @@ public class ShellEmulatorScenario : IScenario
 {
     public string Key => "shell_emulator";
 
-    private List<IShellProgramm> _shellProgramms = new();
+    private List<IShellProgramm> _shellProgramms;
+    private ShellSystem _shellSystem;
 
-    private void InitializeProgramms()
+    private void Initialize()
     {
+        _shellSystem = new();
+
+        _shellProgramms = new();
         _shellProgramms.Add(new HelloProgramm());
+        _shellProgramms.Add(new LsProgramm());
+        _shellProgramms.Add(new CdProgramm());
+        _shellProgramms.Add(new PwdProgramm());
     }
 
     public async Task Execute(CancellationToken token)
     {
+        Initialize();
         Console.WriteLine("Shell emulator started!");
         
-        while (true)
+        while (!token.IsCancellationRequested)
         {
             try
             {
@@ -37,27 +46,14 @@ public class ShellEmulatorScenario : IScenario
                         var programm = _shellProgramms.FirstOrDefault(x => x.Key == commands[0]);
                         if(programm == null) throw new ParsingCommandException("programm is not exists");
                         var args = commands.Skip(1);
-                        await programm.Execute(args);
+                        await programm.Execute(args, _shellSystem);
                         break;
                 }
             }
             catch (Exception ex)
             {
-                if (ex is ParsingCommandException parsingEx)
-                {
-                    var message = "Parsing commands error";
-                    if (!string.IsNullOrEmpty(parsingEx.ParsingMessage))
-                        message += $": {parsingEx.ParsingMessage}";
-                    Console.WriteLine(message);
-                }
-                else
-                    Console.WriteLine(ex);
+                Console.WriteLine(ex);
             }
         }
-    }
-
-    public ShellEmulatorScenario()
-    {
-        InitializeProgramms();
     }
 }

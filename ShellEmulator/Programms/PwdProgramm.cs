@@ -1,14 +1,14 @@
+using MireaConfigurationManagement.Core.Extensions;
 using MireaConfigurationManagement.ShellEmulator.Programms.Base;
 using MireaConfigurationManagement.ShellEmulator.System;
 
 namespace MireaConfigurationManagement.ShellEmulator.Programms;
 
-public class HelloProgramm : IShellProgramm
+public class PwdProgramm : IShellProgramm
 {
-    public string Key => "hello";
-    
+    public string Key => "pwd";
     public async Task Execute(IEnumerable<string> args, ShellSystem system)
     {
-        Console.WriteLine("Hello world!");
+        Console.WriteLine(system.PathPointer);
     }
 }

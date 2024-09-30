@@ -1,9 +1,10 @@
 namespace MireaConfigurationManagement.Core.Scenarios;
 
-public class ScanariosExecutor
+public class ScenariosExecutor
 {
     private List<IScenario> _scenarios = new();
     private CancellationTokenSource _cancellationTokenSource;
+    private TaskCompletionSource<bool> _exitTcs = new();
 
     #region Registering
     
@@ -39,11 +40,17 @@ public class ScanariosExecutor
         _cancellationTokenSource = null;
     }
 
+    public void RestartExecution()
+    {
+        StopExecution();
+        StartExecution();
+    }
+
     private async Task ExecutionPipeline(CancellationToken token)
     {
         Console.WriteLine("Select scenario to execute");
         
-        while (true)
+        while (!token.IsCancellationRequested)
         {
             try
             {
@@ -55,6 +62,7 @@ public class ScanariosExecutor
                 switch (commands[0])
                 {
                     case "exit":
+                        _exitTcs.SetResult(true);
                         return;
                     case "scenario":
                         switch (commands[1])
@@ -64,7 +72,16 @@ public class ScanariosExecutor
                                 var scenario = _scenarios.FirstOrDefault(x => x.Key == commands[2]);
                                 if(scenario == null) throw new ParsingCommandException($"scenario {commands[2]} is not exists");
 
-                                scenario.Execute(token);
+                                try
+                                {
+                                    await scenario.Execute(token);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine(ex);
+                                }
+                                
+                                RestartExecution();
                                 break;
                             case "list":
                                 PrintRegisteredScenarios();
@@ -80,15 +97,7 @@ public class ScanariosExecutor
             }
             catch (Exception ex)
             {
-                if (ex is ParsingCommandException parsingEx)
-                {
-                    var message = "Parsing commands error";
-                    if (!string.IsNullOrEmpty(parsingEx.ParsingMessage))
-                        message += $": {parsingEx.ParsingMessage}";
-                    Console.WriteLine(message);
-                }
-                else
-                    Console.WriteLine(ex);
+                Console.WriteLine(ex);
             }
         }
     }
@@ -100,13 +109,23 @@ public class ScanariosExecutor
             Console.WriteLine($"\t {scenario.Key}");
     }
 
+    public async Task ExitRequest()
+    {
+        await _exitTcs.Task;
+    }
+    
     #endregion
 }
 
 public class ParsingCommandException : Exception
 {
-    public string ParsingMessage { get; private set; }
-
-    public ParsingCommandException() : base() { }
-    public ParsingCommandException(string parsingMessage) : base() => ParsingMessage = parsingMessage;
+    public ParsingCommandException() : base(string.Empty) { }
+    public ParsingCommandException(string parsingMessage) : base(parsingMessage) { }
+    public override string ToString()
+    {
+        var message = "Parsing commands error";
+        if (!string.IsNullOrEmpty(Message))
+            message += $": {Message}";
+        return message;
+    }
 }
