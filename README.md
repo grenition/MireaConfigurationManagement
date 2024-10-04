@@ -1,6 +1,6 @@
 ## Shell emulator
 
-dotnet run "programm name" to run programm
+"dotnet run MireaConfigurationManagement.csproj" to build and run programm
 
 "scenario execute shell_emulator" - to run shell emulator scanario
 
