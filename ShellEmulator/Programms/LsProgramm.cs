@@ -11,7 +11,7 @@ public class LsProgramm : IShellProgramm
     {
         string GetEntry(string raw)
         {
-            if (raw.StartsWith(system.PathPointer) && raw.Length > system.PathPointer.Length)
+            if (raw.StartsWith(system.PathPointer) && raw.Length >= system.PathPointer.Length)
                 return raw.Substring(system.PathPointer.Length, raw.Length - system.PathPointer.Length);
             return raw;
         }
@@ -19,19 +19,16 @@ public class LsProgramm : IShellProgramm
         void PrintEntry(string entry, bool newLine = true)
         {
             if(entry.Length == 0) return;
-            if (entry[0] == '/')
-                entry = entry.Substring(1, entry.Length - 1);
             
             if (newLine)
                 Console.WriteLine(entry);
             else
                 Console.Write(entry);
         }
-        
-        
+
+
         var entries = system.Entries
-            .Where(x => x.StartsWith(system.PathPointer))
-            .Select(x => x.Substring(1, x.Length - 1));
+            .Where(x => x.StartsWith(system.PathPointer));
 
         if (args.Count() > 0 && args.First() == "-1")
         {

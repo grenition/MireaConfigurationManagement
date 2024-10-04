@@ -9,10 +9,12 @@ public class CdProgramm : IShellProgramm
     public async Task Execute(IEnumerable<string> args, ShellSystem system)
     {
         if(args.Count() == 0) return;
+        
+        var pointer = args.First();
 
-        system.PathPointer = args.First();
-
-        if (!system.PathPointer.StartsWith('/'))
-            system.PathPointer = '/' + system.PathPointer;
+        if (pointer.StartsWith('/'))
+            system.PathPointer = pointer;
+        else
+            system.PathPointer += pointer + '/';
     }
 }
