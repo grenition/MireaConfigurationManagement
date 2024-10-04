@@ -22,6 +22,8 @@ public class ShellEmulatorScenario : IScenario
         _shellProgramms.Add(new LsProgramm());
         _shellProgramms.Add(new CdProgramm());
         _shellProgramms.Add(new PwdProgramm());
+        _shellProgramms.Add(new DateProgramm());
+        _shellProgramms.Add(new UptimeProgramm());
     }
 
     public async Task Execute(CancellationToken token)
