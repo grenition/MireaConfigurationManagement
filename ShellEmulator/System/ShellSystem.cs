@@ -30,6 +30,13 @@ public class ShellSystem : IDisposable
                 .Select(x => x.Key.Substring(1, x.Key.Length - 1))
                 .ToList();
         }
+
+        File.WriteAllText(_config.LogFilePath, string.Empty);
+    }
+
+    public void Log(string log)
+    {
+        File.AppendAllText(_config.LogFilePath, log);
     }
     
     public void Dispose()

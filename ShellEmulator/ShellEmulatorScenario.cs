@@ -49,6 +49,7 @@ public class ShellEmulatorScenario : IScenario
                         if(programm == null) throw new ParsingCommandException("programm is not exists");
                         var args = commands.Skip(1);
                         await programm.Execute(args, _shellSystem);
+                        _shellSystem.Log(commandLine + '\n');
                         break;
                 }
             }
