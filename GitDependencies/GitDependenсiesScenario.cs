@@ -1,6 +1,9 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using LibGit2Sharp;
 using MireaConfigurationManagement.Core.Scenarios;
 
@@ -36,12 +39,17 @@ public class GitDependenciesScenario : IScenario
                 }
 
                 var mermaidGraph = BuildDependencyGraph(repoPath, dateThreshold);
+                var graphFilePath = Path.Combine(Path.GetTempPath(), "dependency_graph.mmd");
+                File.WriteAllText(graphFilePath, mermaidGraph);
+
+                var pngFilePath = Path.Combine(Path.GetTempPath(), "dependency_graph.png");
+                GeneratePngFromMermaid(graphFilePath, pngFilePath);
+
+                OpenImageFile(pngFilePath);
+
+                Console.WriteLine("Graph visualization generated and opened.");
                 
-                var visualizerUrl = $"https://mermaid.live/edit#pako:{ToBase64(mermaidGraph)}";
-
-                OpenUrlInBrowser(visualizerUrl);
-
-                Console.WriteLine("Graph visualization opened in the browser.");
+                return;
             }
             catch (Exception ex)
             {
@@ -110,27 +118,49 @@ public class GitDependenciesScenario : IScenario
         return graphBuilder.ToString();
     }
 
-    private void OpenUrlInBrowser(string url)
+    private void GeneratePngFromMermaid(string mermaidFilePath, string pngFilePath)
     {
         try
         {
             var psi = new ProcessStartInfo
             {
-                FileName = url,
+                FileName = "mmdc",
+                Arguments = $"-i \"{mermaidFilePath}\" -o \"{pngFilePath}\" -w 1920 -H 1080",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using var process = Process.Start(psi);
+            process.WaitForExit();
+
+            if (process.ExitCode != 0)
+            {
+                var error = process.StandardError.ReadToEnd();
+                throw new InvalidOperationException($"MermaidCLI error: {error}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Unable to generate PNG from Mermaid graph: {ex.Message}");
+        }
+    }
+
+    private void OpenImageFile(string filePath)
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = filePath,
                 UseShellExecute = true
             };
             Process.Start(psi);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Unable to open the URL in browser: {ex.Message}");
+            Console.WriteLine($"Unable to open the image file: {ex.Message}");
         }
-    }
-
-    public static string ToBase64(string text)
-    {
-        byte[] bytes = System.Text.Encoding.UTF8.GetBytes(text);
-        string base64String = Convert.ToBase64String(bytes);
-        return base64String;
     }
 }

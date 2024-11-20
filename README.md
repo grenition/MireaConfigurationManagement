@@ -1,7 +1,33 @@
-## Shell emulator
+# Mirea configaration management homeworks
 
-"dotnet run MireaConfigurationManagement.csproj" to build and run programm
+Для сборки и исполнения программы у вас должна быть установлена среда исполнения .net
 
-"scenario execute shell_emulator" - to run shell emulator scanario
+```
+здесь должны быть команды на установку dotnet для разных os
+```
 
-ls, cd, pwd, uptime, date - shell programms included
+Для исполнения программы перейдите в каталог, содержащий файл ```MireaConfigurationManagement.csproj```
+и введите следующую команду
+
+```
+dotnet run MireaConfigurationManagement.csproj
+```
+
+# Homework1 - Shell emulator
+
+Команда для перехода к сценарию эмулятора CLI
+
+```
+scenario execute shell_emulator
+```
+
+Сценарий эмулирует следующие bash команды ```ls, cd, pwd, uptime, date```
+
+# Homework 2 - Git dependencies visualizer
+
+Для корректной работы сценария, необходимо, чтобы был установлен MermaidCLI
+
+Команда для установки (через npm, поэтому необходим установленный node.js):
+```
+npm install -g @mermaid-js/mermaid-cli
+```
