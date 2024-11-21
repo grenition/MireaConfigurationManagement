@@ -6,130 +6,126 @@ namespace MireaConfigurationManagement.ConfLanguage;
 public class JsonToConfConverter
 {
     private StringBuilder _output;
-    
+
     public string ConvertFromJson(string json)
     {
         _output = new StringBuilder();
 
         var parser = new JsonCommentParser();
         var rootNodes = parser.Parse(json);
-        
+
         foreach (var rootNode in rootNodes)
         {
-            ConvertJsonNodeToConfLanguage(rootNode);
+            ConvertJsonNodeToConfLanguage(rootNode, _output, 0);
         }
-        
+
         return _output.ToString();
     }
-    private void ConvertJsonNodeToConfLanguage(JsonNode node, int indentLevel = 0)
+    private void ConvertJsonNodeToConfLanguage(JsonNode node, StringBuilder output, int indentLevel)
     {
         switch (node.Type)
         {
             case JsonNodeType.Comment:
-                WriteComment(node.Value, indentLevel);
+                WriteComment(node.Value, output, indentLevel);
                 break;
             case JsonNodeType.Object:
-                ConvertObjectNode(node, indentLevel);
+                ConvertObjectNode(node, output, indentLevel);
                 break;
             case JsonNodeType.Array:
-                ConvertArrayNode(node, indentLevel);
+                ConvertArrayNode(node, output, indentLevel);
                 break;
             case JsonNodeType.Property:
-                ConvertPropertyNode(node, indentLevel);
+                ConvertPropertyNode(node, output, indentLevel);
                 break;
             case JsonNodeType.Value:
-                ConvertValueNode(node, indentLevel);
+                ConvertValueNode(node, output, indentLevel);
                 break;
             default:
                 throw new Exception($"Unsupported node type: {node.Type}");
         }
     }
 
-    private void ConvertObjectNode(JsonNode node, int indentLevel)
+    private void ConvertObjectNode(JsonNode node, StringBuilder output, int indentLevel)
     {
-        AppendIndent(_output, indentLevel);
-        _output.AppendLine("table(");
+        output.AppendLine("table(");
 
         bool first = true;
         foreach (var child in node.Children)
         {
             if (!first)
-                _output.AppendLine(",");
+                output.AppendLine(",");
             first = false;
 
-            ConvertJsonNodeToConfLanguage(child, indentLevel + 1);
+            ConvertJsonNodeToConfLanguage(child, output, indentLevel + 1);
         }
 
-        _output.AppendLine();
-        AppendIndent(_output, indentLevel);
-        _output.Append(")");
+        output.AppendLine();
+        AppendIndent(output, indentLevel);
+        output.Append(")");
     }
 
-    private void ConvertArrayNode(JsonNode node, int indentLevel)
+    private void ConvertArrayNode(JsonNode node, StringBuilder output, int indentLevel)
     {
-        AppendIndent(_output, indentLevel);
-        _output.AppendLine("[");
+        output.Append("[");
 
         bool first = true;
         foreach (var child in node.Children)
         {
             if (!first)
-                _output.AppendLine(";");
+                output.Append("; ");
             first = false;
 
-            ConvertJsonNodeToConfLanguage(child, indentLevel + 1);
+            ConvertJsonNodeToConfLanguage(child, output, indentLevel + 1);
         }
 
-        _output.AppendLine();
-        AppendIndent(_output, indentLevel);
-        _output.Append("]");
+        output.Append("]");
     }
 
-    private void ConvertPropertyNode(JsonNode node, int indentLevel)
+    private void ConvertPropertyNode(JsonNode node, StringBuilder output, int indentLevel)
     {
-        AppendIndent(_output, indentLevel);
+        AppendIndent(output, indentLevel);
 
         var name = node.Name;
         if (!IsValidName(name))
             throw new Exception($"Invalid name: {name}");
 
         var valueOutput = new StringBuilder();
-        ConvertJsonNodeToConfLanguage(node.ValueNode, 0);
+        ConvertJsonNodeToConfLanguage(node.ValueNode, valueOutput, indentLevel);
 
-        _output.Append($"{name} => {valueOutput}");
+        output.Append($"{name} => {valueOutput}");
     }
 
-    private void ConvertValueNode(JsonNode node, int indentLevel)
+    private void ConvertValueNode(JsonNode node, StringBuilder output, int indentLevel)
     {
         switch (node.ValueKind)
         {
             case JsonValueKind.String:
-                _output.Append($"'{EscapeString(node.Value)}'");
+                output.Append($"'{EscapeString(node.Value)}'");
                 break;
             case JsonValueKind.Number:
             case JsonValueKind.Boolean:
             case JsonValueKind.Null:
-                _output.Append(node.Value);
+                output.Append(node.Value);
                 break;
             default:
                 throw new Exception($"Unsupported value kind: {node.ValueKind}");
         }
     }
 
-    private void WriteComment(string comment, int indentLevel)
+    private void WriteComment(string comment, StringBuilder output, int indentLevel)
     {
-        AppendIndent(_output, indentLevel);
-        _output.AppendLine("{#");
+        AppendIndent(output, indentLevel);
+        output.AppendLine("{#");
         foreach (var line in comment.Split(new[]
                  {
                      '\r', '\n'
                  }, StringSplitOptions.RemoveEmptyEntries))
         {
-            AppendIndent(_output, indentLevel);
-            _output.AppendLine(line.Trim());
+            AppendIndent(output, indentLevel);
+            output.AppendLine(line.Trim());
         }
-        AppendIndent(_output, indentLevel);
-        _output.AppendLine("#}");
+        AppendIndent(output, indentLevel);
+        output.AppendLine("#}");
     }
 
     private bool IsValidName(string name)
@@ -144,6 +140,6 @@ public class JsonToConfConverter
 
     private void AppendIndent(StringBuilder sb, int indentLevel)
     {
-        sb.Append(new string(' ', indentLevel * 2));
+        sb.Append(new string('\t', indentLevel * 2));
     }
 }

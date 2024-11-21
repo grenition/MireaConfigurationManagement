@@ -48,6 +48,4 @@ public class ConfLanguageScenario : IScenario
             Console.WriteLine($"Error: {ex.Message}");
         }
     }
-
-    
 }
