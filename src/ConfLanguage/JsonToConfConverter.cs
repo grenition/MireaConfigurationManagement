@@ -50,13 +50,15 @@ public class JsonToConfConverter
         output.AppendLine("table(");
 
         bool first = true;
+        JsonNode previous = null;
         foreach (var child in node.Children)
         {
-            if (!first)
+            if (!first && (previous == null || previous.Type != JsonNodeType.Comment))
                 output.AppendLine(",");
             first = false;
 
             ConvertJsonNodeToConfLanguage(child, output, indentLevel + 1);
+            previous = child;
         }
 
         output.AppendLine();
@@ -116,10 +118,7 @@ public class JsonToConfConverter
     {
         AppendIndent(output, indentLevel);
         output.AppendLine("{#");
-        foreach (var line in comment.Split(new[]
-                 {
-                     '\r', '\n'
-                 }, StringSplitOptions.RemoveEmptyEntries))
+        foreach (var line in comment.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
         {
             AppendIndent(output, indentLevel);
             output.AppendLine(line.Trim());
