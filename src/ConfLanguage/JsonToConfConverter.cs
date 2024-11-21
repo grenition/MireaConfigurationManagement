@@ -139,6 +139,6 @@ public class JsonToConfConverter
 
     private void AppendIndent(StringBuilder sb, int indentLevel)
     {
-        sb.Append(new string('\t', indentLevel * 2));
+        sb.Append(new string(' ', indentLevel * 4));
     }
 }
