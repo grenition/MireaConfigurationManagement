@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="LibGit2Sharp" Version="0.30.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="SharpCompress" Version="0.38.0" />
     <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="9.0.0-rc.1.24431.7" />
     <PackageReference Include="Tomlyn" Version="0.17.0" />

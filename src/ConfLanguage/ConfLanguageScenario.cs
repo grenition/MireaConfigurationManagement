@@ -1,7 +1,5 @@
-using System.Text;
-using System.Text.Json;
-using System.Text.RegularExpressions;
 using MireaConfigurationManagement.Core.Scenarios;
+using Newtonsoft.Json;
 
 namespace MireaConfigurationManagement.ConfLanguage;
 
@@ -14,7 +12,7 @@ public class ConfLanguageScenario : IScenario
         try
         {
             Console.WriteLine("Enter JSON data:");
-            
+
             var lines = new List<string>();
             while (true)
             {
@@ -24,22 +22,20 @@ public class ConfLanguageScenario : IScenario
                 lines.Add(line);
             }
             var jsonInput = string.Join('\n', lines);
-            
+
             Console.WriteLine("Enter absolute output file path");
             string outputPath = Console.ReadLine();
-            
+
             if (string.IsNullOrEmpty(outputPath))
             {
                 Console.WriteLine("Invalid file path.");
                 return;
             }
 
-            using JsonDocument document = JsonDocument.Parse(jsonInput);
-            var rootElement = document.RootElement;
+            var confConverter = new JsonToConfConverter();
+            var confOutputText = confConverter.ConvertFromJson(jsonInput);
 
-            var confLanguageOutput = ConvertJsonToConfLanguage(rootElement);
-
-            await File.WriteAllTextAsync(outputPath, confLanguageOutput);
+            await File.WriteAllTextAsync(outputPath, confOutputText);
 
             Console.WriteLine($"Converting JSON to Edu Configutaion language completed. Result writed to file {outputPath}");
         }
@@ -53,87 +49,5 @@ public class ConfLanguageScenario : IScenario
         }
     }
 
-    private string ConvertJsonToConfLanguage(JsonElement element, int nestingLevel = 0)
-    {
-        switch (element.ValueKind)
-        {
-            case JsonValueKind.Object:
-                return ConvertObject(element, nestingLevel);
-            case JsonValueKind.Array:
-                return ConvertArray(element, nestingLevel);
-            case JsonValueKind.String:
-                return $"'{EscapeString(element.GetString())}'";
-            case JsonValueKind.Number:
-                return element.GetRawText();
-            case JsonValueKind.True:
-            case JsonValueKind.False:
-                return element.GetRawText();
-            case JsonValueKind.Null:
-                return "null";
-            default:
-                throw new Exception("Unsupported JSON value kind.");
-        }
-    }
-
-    private string ConvertObject(JsonElement element, int nestingLevel = 0)
-    {
-        var sb = new StringBuilder();
-        sb.AppendLine("table(");
-
-        bool first = true;
-        foreach (var property in element.EnumerateObject())
-        {
-            if (!first)
-                sb.AppendLine(",");
-            first = false;
-
-            var name = property.Name;
-            if (!IsValidName(name))
-                throw new Exception($"Invalid name: {name}");
-
-            var value = ConvertJsonToConfLanguage(property.Value, nestingLevel + 1);
-            InsertNesting(sb, nestingLevel);
-            sb.Append($" {name} => {value}");
-        }
-
-        sb.AppendLine();
-        InsertNesting(sb, nestingLevel);
-        sb.Append(")");
-        return sb.ToString();
-    }
-
-    private string ConvertArray(JsonElement element, int nestingLevel = 0)
-    {
-        var sb = new StringBuilder();
-        sb.Append("[ ");
-
-        bool first = true;
-        foreach (var item in element.EnumerateArray())
-        {
-            if (!first)
-                sb.Append("; ");
-            first = false;
-
-            var value = ConvertJsonToConfLanguage(item, nestingLevel + 1);
-            sb.Append(value);
-        }
-
-        sb.Append(" ]");
-        return sb.ToString();
-    }
-
-    private bool IsValidName(string name)
-    {
-        return Regex.IsMatch(name, "^[a-zA-Z][a-zA-Z0-9]*$");
-    }
-
-    private string EscapeString(string str)
-    {
-        return str.Replace("'", "\\'");
-    }
-    private void InsertNesting(StringBuilder stringBuilder, int nestingLevel)
-    {
-        for (int i = 0; i < nestingLevel; i++)
-            stringBuilder.Append('\t');
-    }
+    
 }
