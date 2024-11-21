@@ -20,9 +20,6 @@
 
   <ItemGroup>
     <None Remove="Resources\shellEmulatorConfig.toml" />
-    <Content Include="Resources\shellEmulatorConfig.toml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
 
 </Project>
