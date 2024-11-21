@@ -55,14 +55,6 @@ public class ConfLanguageScenario : IScenario
 
     private string ConvertJsonToConfLanguage(JsonElement element, int nestingLevel = 0)
     {
-        string GetNesting()
-        {
-            var nesting = string.Empty;
-            for (int i = 0; i < nestingLevel; i++)
-                nesting += '\t';
-            return nesting;
-        }
-        
         switch (element.ValueKind)
         {
             case JsonValueKind.Object:
@@ -70,14 +62,14 @@ public class ConfLanguageScenario : IScenario
             case JsonValueKind.Array:
                 return ConvertArray(element, nestingLevel);
             case JsonValueKind.String:
-                return GetNesting() + $"'{EscapeString(element.GetString())}'";
+                return $"'{EscapeString(element.GetString())}'";
             case JsonValueKind.Number:
-                return GetNesting() + element.GetRawText();
+                return element.GetRawText();
             case JsonValueKind.True:
             case JsonValueKind.False:
-                return GetNesting() + element.GetRawText();
+                return element.GetRawText();
             case JsonValueKind.Null:
-                return GetNesting() + "null";
+                return "null";
             default:
                 throw new Exception("Unsupported JSON value kind.");
         }
@@ -100,10 +92,12 @@ public class ConfLanguageScenario : IScenario
                 throw new Exception($"Invalid name: {name}");
 
             var value = ConvertJsonToConfLanguage(property.Value, nestingLevel + 1);
+            InsertNesting(sb, nestingLevel);
             sb.Append($" {name} => {value}");
         }
 
         sb.AppendLine();
+        InsertNesting(sb, nestingLevel);
         sb.Append(")");
         return sb.ToString();
     }
@@ -136,5 +130,10 @@ public class ConfLanguageScenario : IScenario
     private string EscapeString(string str)
     {
         return str.Replace("'", "\\'");
+    }
+    private void InsertNesting(StringBuilder stringBuilder, int nestingLevel)
+    {
+        for (int i = 0; i < nestingLevel; i++)
+            stringBuilder.Append('\t');
     }
 }
