@@ -39,18 +39,17 @@ public class WriteMemCommand : AssemblerCommand
         code |= ((ulong)(B & 0x7)) << 6;        
         code |= ((ulong)(C & 0x7)) << 9; 
         code |= ((ulong)(D & 0x7FF)) << 12; 
-
+        
         byte[] bytes = new byte[3];
-        for (int i = 0; i < 3; i++)
-        {
-            bytes[i] = (byte)((code >> (i * 8)) & 0xFF);
-        }
+        bytes[0] = (byte)((code >> 0) & 0xFF);
+        bytes[1] = (byte)((code >> 8) & 0xFF);
+        bytes[2] = (byte)((code >> 16) & 0xFF); 
 
         return bytes;
     }
 
     public override string GetLogEntry()
     {
-        return $"WRITE_MEM: A={1}, B={B}, C={C}, D={D}";
+        return $"WRITE_MEM: A={A}, B={B}, C={C}, D={D}";
     }
 }
