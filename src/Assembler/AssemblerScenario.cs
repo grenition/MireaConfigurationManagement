@@ -14,65 +14,83 @@ namespace MireaConfigurationManagement.Assembler
         public async Task Execute(CancellationToken token)
         {
             Console.WriteLine("Enter source file path");
-            string sourceFilePath = Console.ReadLine();
+            string inputFile = Console.ReadLine();
             Console.WriteLine("Enter binary file path");
-            string binaryFilePath = Console.ReadLine();
+            string outputFile = Console.ReadLine();
             Console.WriteLine("Enter log file path");
-            string logFilePath = Console.ReadLine();
-
-            string[] sourceLines = await File.ReadAllLinesAsync(sourceFilePath, token);
-
-            List<byte> binaryInstructions = new List<byte>();
-            List<string> logEntries = new List<string>();
-
-            List<AssemblerCommand> commandParsers = new List<AssemblerCommand>
+            string logFile = Console.ReadLine();
+            
+            using (BinaryWriter writer = new BinaryWriter(File.Open(outputFile, FileMode.Create)))
+            using (StreamWriter logfile = new StreamWriter(logFile))
             {
-                new LoadConstCommand(),
-                new ReadMemCommand(),
-                new WriteMemCommand(),
-                new BitrevCommand()
-            };
-
-            foreach (string line in sourceLines)
-            {
-                string trimmedLine = line.Trim();
-
-                if (string.IsNullOrEmpty(trimmedLine) || trimmedLine.StartsWith("#"))
+                using (StreamReader infile = new StreamReader(inputFile))
                 {
-                    continue;
-                }
-
-                string[] tokens = trimmedLine.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-                if (tokens.Length == 0)
-                {
-                    continue;
-                }
-
-                AssemblerCommand command = null;
-                foreach (var parser in commandParsers)
-                {
-                    if (parser.TryParse(tokens, out command))
+                    while (!infile.EndOfStream)
                     {
-                        break;
+                        var line = await infile.ReadLineAsync();
+                        
+                        if (token.IsCancellationRequested)
+                            token.ThrowIfCancellationRequested();
+
+                        line = line.Trim();
+
+                        if (string.IsNullOrEmpty(line) || line.StartsWith("#"))
+                            continue;
+
+                        string[] tokens = line.Split(new char[]
+                        {
+                            ' ', '\t', ','
+                        }, StringSplitOptions.RemoveEmptyEntries);
+
+                        if (tokens.Length == 0)
+                            continue;
+
+                        AssemblerCommand command = null;
+
+                        List<AssemblerCommand> possibleCommands = new List<AssemblerCommand>
+                        {
+                            new LoadConstCommand(),
+                            new ReadMemCommand(),
+                            new WriteMemCommand(),
+                            new BitrevCommand()
+                        };
+
+                        bool parsed = false;
+                        foreach (var cmd in possibleCommands)
+                        {
+                            try
+                            {
+                                if (cmd.TryParse(tokens))
+                                {
+                                    command = cmd;
+                                    parsed = true;
+                                    break;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.Error.WriteLine($"Error parsing instruction '{line}': {ex.Message}");
+                                parsed = true;
+                                break;
+                            }
+                        }
+
+                        if (!parsed)
+                        {
+                            Console.Error.WriteLine($"Unknown instruction: '{line}'");
+                            continue;
+                        }
+
+                        byte[] code = command.Assemble();
+                        writer.Write(code);
+
+                        logfile.WriteLine(command.GetLogEntry());
                     }
                 }
 
-                if (command == null)
-                {
-                    Console.WriteLine($"Undefined instruction: {line}");
-                    continue;
-                }
-
-                byte[] instructionBytes = command.Assemble();
-                binaryInstructions.AddRange(instructionBytes);
-
-                logEntries.Add(command.GetLogEntry());
+                Console.WriteLine("Assembly completed successfully.");
             }
 
-            await File.WriteAllBytesAsync(binaryFilePath, binaryInstructions.ToArray(), token);
-
-            await File.WriteAllLinesAsync(logFilePath, logEntries, token);
         }
     }
 }

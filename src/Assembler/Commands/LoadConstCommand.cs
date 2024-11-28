@@ -1,47 +1,49 @@
 namespace MireaConfigurationManagement.Assembler;
+
 public class LoadConstCommand : AssemblerCommand
 {
     public override string Name => "LOAD_CONST";
 
-    public int ConstValue { get; private set; }
-    public int RegAddress { get; private set; }
+    private const uint A = 28;
 
-    public override bool TryParse(string[] tokens, out AssemblerCommand command)
+    private uint B;
+    private uint C;
+
+    public override bool TryParse(string[] tokens)
     {
-        command = null;
-
-        if (tokens.Length != 3 || tokens[0].ToUpper() != Name)
+        if (tokens.Length != 3 || tokens[0] != Name)
             return false;
 
-        if (int.TryParse(tokens[1], out int constValue) && int.TryParse(tokens[2], out int regAddress))
-        {
-            command = new LoadConstCommand
-            {
-                ConstValue = constValue,
-                RegAddress = regAddress
-            };
-            return true;
-        }
-        return false;
+        string operand = tokens[1];
+        string reg = tokens[2];
+
+        if (!uint.TryParse(operand, out B))
+            throw new Exception("Invalid constant value in LOAD_CONST");
+
+        if (!uint.TryParse(reg, out C))
+            throw new Exception("Invalid register number in LOAD_CONST");
+
+        return true;
     }
 
     public override byte[] Assemble()
     {
-        uint instructionValue = 0;
-        instructionValue |= (uint)(28 & 0x3F);
-        instructionValue |= ((uint)(ConstValue & 0x3FFF) << 6);
-        instructionValue |= ((uint)(RegAddress & 0x7) << 20);
+        ulong code = 0;
 
-        byte[] instructionBytes = new byte[3];
-        instructionBytes[0] = (byte)(instructionValue & 0xFF);
-        instructionBytes[1] = (byte)((instructionValue >> 8) & 0xFF);
-        instructionBytes[2] = (byte)((instructionValue >> 16) & 0xFF);
+        code |= (A & 0x3F) << 0;
+        code |= (B & 0x3FFF) << 6;
+        code |= (C & 0x7) << 20;
 
-        return instructionBytes;
+        byte[] bytes = new byte[3];
+        bytes[0] = (byte)((code >> 0) & 0xFF);
+        bytes[1] = (byte)((code >> 8) & 0xFF);
+        bytes[2] = (byte)((code >> 16) & 0xFF);
+
+        return bytes;
     }
 
     public override string GetLogEntry()
     {
-        return $"A=28, B={ConstValue}, C={RegAddress}";
+        return $"LOAD_CONST: A={A}, B={B}, C={C}";
     }
 }

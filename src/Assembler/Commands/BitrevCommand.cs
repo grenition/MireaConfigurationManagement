@@ -4,46 +4,47 @@ public class BitrevCommand : AssemblerCommand
 {
     public override string Name => "BITREV";
 
-    public int RegAddressTarget { get; private set; }
-    public int MemoryAddress { get; private set; }
+    private const uint A = 58;
 
-    public override bool TryParse(string[] tokens, out AssemblerCommand command)
+    private uint B; 
+    private uint C;
+
+    public override bool TryParse(string[] tokens)
     {
-        command = null;
-
-        if (tokens.Length != 3 || tokens[0].ToUpper() != Name)
+        if (tokens.Length != 3 || tokens[0] != Name)
             return false;
 
-        if (int.TryParse(tokens[1], out int regTarget) && int.TryParse(tokens[2], out int memAddress))
-        {
-            command = new BitrevCommand
-            {
-                RegAddressTarget = regTarget,
-                MemoryAddress = memAddress
-            };
-            return true;
-        }
-        return false;
+        string reg = tokens[1];
+        string memoryAddressStr = tokens[2];
+        
+        if (!uint.TryParse(reg, out B))
+            throw new Exception("Invalid register number in BITREV");
+
+        if (!uint.TryParse(memoryAddressStr, out C))
+            throw new Exception("Invalid memory address in BITREV");
+
+        return true;
     }
 
     public override byte[] Assemble()
     {
-        uint instructionValue = 0;
-        instructionValue |= (uint)(58 & 0x3F);
-        instructionValue |= ((uint)(RegAddressTarget & 0x7) << 6);
-        instructionValue |= ((uint)(MemoryAddress & 0xFFFFF) << 9);
+        ulong code = 0;
+        
+        code |= ((ulong)(A & 0x3F)) << 0;         
+        code |= ((ulong)(B & 0x7)) << 6;        
+        code |= ((ulong)(C & 0x3FFFFF)) << 9; 
 
-        byte[] instructionBytes = new byte[4];
-        instructionBytes[0] = (byte)(instructionValue & 0xFF);
-        instructionBytes[1] = (byte)((instructionValue >> 8) & 0xFF);
-        instructionBytes[2] = (byte)((instructionValue >> 16) & 0xFF);
-        instructionBytes[3] = (byte)((instructionValue >> 24) & 0xFF);
+        byte[] bytes = new byte[4];
+        for (int i = 0; i < 4; i++)
+        {
+            bytes[i] = (byte)((code >> (i * 8)) & 0xFF);
+        }
 
-        return instructionBytes;
+        return bytes;
     }
 
     public override string GetLogEntry()
     {
-        return $"A=58, B={RegAddressTarget}, C={MemoryAddress}";
+        return $"BITREV: A={A}, B={B}, C={C}";
     }
 }
