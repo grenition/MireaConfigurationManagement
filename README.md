@@ -1,4 +1,4 @@
-# Mirea configaration management homeworks
+# Mirea configaration management
 
 Для сборки и исполнения программы у вас должна быть установлена среда исполнения .net
 
@@ -9,7 +9,7 @@
 dotnet run MireaConfigurationManagement.csproj
 ```
 
-# Homework1 - Shell emulator
+# Shell emulator
 
 Команда для перехода к сценарию эмулятора CLI
 
@@ -19,7 +19,7 @@ scenario execute shell_emulator
 
 Сценарий эмулирует следующие bash команды `ls, cd, pwd, uptime, date`
 
-# Homework 2 - Git dependencies visualizer
+# Git dependencies visualizer
 
 Для корректной работы сценария, необходимо, чтобы был установлен [MermaidCLI](https://github.com/mermaid-js/mermaid-cli)
 
@@ -36,7 +36,7 @@ GitDependenciesScenario – это сценарий, предназначенн�
 scenario execute git_dependencies
 ```
 
-# Homework 3 - Edu configuration language
+# Edu configuration language
 
 Инструмент командной строки для учебного конфигурационного. Этот инструмент преобразует текст из
 входного формата в выходной. Синтаксические ошибки выявляются с выдачей
@@ -89,7 +89,7 @@ table(
 )
 ```
 
-# Homework 4 - Edu assemler and interpretator
+# Edu assemler and interpretator
 
 Ассемблер и интерпретатор для учебной виртуальной машины
 (УВМ). Система команд УВМ представлена далее.
